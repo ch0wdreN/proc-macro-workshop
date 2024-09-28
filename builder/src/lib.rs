@@ -1,6 +1,6 @@
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
-use syn::{Data, DeriveInput, Field, Fields, parse_macro_input, punctuated::Iter};
+use syn::{parse_macro_input, punctuated::Iter, Data, DeriveInput, Field, Fields};
 
 #[proc_macro_derive(Builder)]
 pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
@@ -37,17 +37,15 @@ pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 }
 
 fn extract_fields(data: &Data) -> Iter<Field> {
-   match data {
-       Data::Struct(structure) => match &structure.fields {
-           Fields::Named(fields_named) => {
-               fields_named.named.iter()
-           }
-           _ => unimplemented!()
-       }
-       _ => {
-           unimplemented!()
-       }
-   }
+    match data {
+        Data::Struct(structure) => match &structure.fields {
+            Fields::Named(fields_named) => fields_named.named.iter(),
+            _ => unimplemented!(),
+        },
+        _ => {
+            unimplemented!()
+        }
+    }
 }
 
 fn builder_setter(data: &Data) -> TokenStream {
