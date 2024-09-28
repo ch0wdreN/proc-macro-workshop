@@ -9,15 +9,13 @@ pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let struct_name = input.ident;
     let builder_name = Ident::new(&format!("{}Builder", &struct_name), Span::call_site());
+    let builder_field = builder_field(&input.data);
     let setters = builder_setter(&input.data);
     let build = builder_build(&input.data, &struct_name);
 
     let expanded = quote! {
         pub struct #builder_name {
-            executable: Option<String>,
-            args: Option<Vec<String>>,
-            env: Option<Vec<String>>,
-            current_dir: Option<String>,
+            #builder_field
         }
 
         impl #struct_name {
@@ -50,6 +48,22 @@ fn extract_fields(data: &Data) -> &FieldsNamed {
         _ => {
             unimplemented!()
         }
+    }
+}
+
+fn builder_field(data: &Data) -> TokenStream {
+    let fields = extract_fields(data);
+    let wrapped_fields = fields.named.iter().map(|f| {
+        let field_name = &f.ident;
+        let field_type = &f.ty;
+
+        quote! {
+            #field_name: std::option::Option<#field_type>
+        }
+    });
+
+    quote! {
+        #(#wrapped_fields),*
     }
 }
 
