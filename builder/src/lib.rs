@@ -10,6 +10,7 @@ pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let struct_name = input.ident;
     let builder_name = Ident::new(&format!("{}Builder", &struct_name), Span::call_site());
     let builder_field = builder_field(&input.data);
+    let builder_init = builder_init(&input.data);
     let setters = builder_setter(&input.data);
     let build = builder_build(&input.data, &struct_name);
 
@@ -21,10 +22,7 @@ pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         impl #struct_name {
             pub fn builder() -> #builder_name {
                 #builder_name {
-                    executable: None,
-                    args: None,
-                    env: None,
-                    current_dir: None
+                    #builder_init
                 }
             }
         }
@@ -64,6 +62,21 @@ fn builder_field(data: &Data) -> TokenStream {
 
     quote! {
         #(#wrapped_fields),*
+    }
+}
+
+fn builder_init(data: &Data) -> TokenStream {
+    let fields = extract_fields(data);
+    let init_field = fields.named.iter().map(|f| {
+        let field_name = &f.ident;
+
+        quote! {
+            #field_name: std::option::Option::None
+        }
+    });
+
+    quote! {
+        #(#init_field),*
     }
 }
 
